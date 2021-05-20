@@ -1,3 +1,4 @@
 requests
 suds-py3
 urllib3
+xmltodict

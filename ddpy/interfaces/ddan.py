@@ -5,6 +5,8 @@ import urllib.parse
 import zipfile
 from shutil import copyfile
 
+import xmltodict
+
 from typing import List, Dict
 
 from ..utils.utils import get_challenge, get_epoch_time, get_system_hostname, hash_file, calculate_checksum, generate_meta_file_contents
@@ -172,6 +174,33 @@ class DDAN:
         except Exception as ex:
             print(ex)
 
+    def get_report(self, sha1val):
+        """
+        Upload a file data to Analyzer for analysis
+        :param sha1val:
+
+        :return: report dict
+        """
+
+        try:
+            url = 'https://{}/web_service/sample_upload/get_report'.format(self.analyzer_ip)
+
+            headers = {
+                "X-DTAS-ClientUUID": self.uuid,
+                "X-DTAS-SHA1": sha1val,
+                "X-DTAS-ReportType": '0', # 0 for Single Image (default), 1 for Multiple Images. If the sample was analyzed by multiple image types, choose the report having the highest ROZ rating. If the ROZ ratings are all the same, choose the report having the lowest image type ID. (optional)
+                "X-DTAS-ChecksumCalculatingOrder": "X-DTAS-ProtocolVersion,X-DTAS-ClientUUID,"\
+                                                   "X-DTAS-SHA1,X-DTAS-ReportType,X-DTAS-Time,X-DTAS-Challenge",
+            }
+            
+            r = requests.get(url, verify=self.verify_cert, headers=self._build_headers(headers),)
+            
+            report = xmltodict.parse(r.text, attr_prefix='', dict_constructor=dict)
+            
+            return report
+        except Exception as ex:
+            print(ex)
+            return {}
 
     def _build_headers(self, call_headers):
         """
